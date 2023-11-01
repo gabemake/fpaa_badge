@@ -21,7 +21,8 @@
 #define I2S_SCLK_PIN 8
 
 //Storage config (comment for internal flash)
-#define USE_SD_CARD
+//#define USE_SD_CARD
+#define USE_SDMMC_MODE
 
 // SDMMC Configuration (default for ESP32-WROVER-E)
 #define SDMMC_CMD_PIN 6

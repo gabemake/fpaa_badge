@@ -67,11 +67,11 @@ static esp_err_t index_html_get_handler(httpd_req_t *req)
  * This can be overridden by uploading file with same name */
 static esp_err_t favicon_get_handler(httpd_req_t *req)
 {
-    /*extern const unsigned char favicon_ico_start[] asm("_binary_favicon_ico_start");
+    extern const unsigned char favicon_ico_start[] asm("_binary_favicon_ico_start");
     extern const unsigned char favicon_ico_end[]   asm("_binary_favicon_ico_end");
     const size_t favicon_ico_size = (favicon_ico_end - favicon_ico_start);
     httpd_resp_set_type(req, "image/x-icon");
-    httpd_resp_send(req, (const char *)favicon_ico_start, favicon_ico_size);*/
+    httpd_resp_send(req, (const char *)favicon_ico_start, favicon_ico_size);
     return ESP_OK;
 }
 
@@ -105,18 +105,18 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath)
     httpd_resp_sendstr_chunk(req, "<!DOCTYPE html><html><body>");
 
     /* Get handle to embedded file upload script */
-    //extern const unsigned char upload_script_start[] asm("_binary_upload_script_html_start");
-    //extern const unsigned char upload_script_end[]   asm("_binary_upload_script_html_end");
-    //const size_t upload_script_size = (upload_script_end - upload_script_start);
+    extern const unsigned char upload_script_start[] asm("_binary_upload_script_html_start");
+    extern const unsigned char upload_script_end[]   asm("_binary_upload_script_html_end");
+    const size_t upload_script_size = (upload_script_end - upload_script_start);
 
     /* Add file upload form and script which on execution sends a POST request to /upload */
-    //httpd_resp_send_chunk(req, (const char *)upload_script_start, upload_script_size);
+    httpd_resp_send_chunk(req, (const char *)upload_script_start, upload_script_size);
 
     /* Send file-list table definition and column labels */
     httpd_resp_sendstr_chunk(req,
         "<table class=\"fixed\" border=\"1\">"
-        "<col width=\"800px\" /><col width=\"300px\" /><col width=\"300px\" /><col width=\"100px\" />"
-        "<thead><tr><th>Name</th><th>Type</th><th>Size (Bytes)</th><th>Delete</th></tr></thead>"
+        "<col width=\"800px\" /><col width=\"300px\" /><col width=\"300px\" /><col width=\"100px\" /><col width=\"100px\" />"
+        "<thead><tr><th>Name</th><th>Type</th><th>Size (Bytes)</th><th>Delete</th><th>FPAA Program</th></tr></thead>"
         "<tbody>");
 
     /* Iterate over all files / folders and fetch their names and sizes */
@@ -149,6 +149,11 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath)
         httpd_resp_sendstr_chunk(req, req->uri);
         httpd_resp_sendstr_chunk(req, entry->d_name);
         httpd_resp_sendstr_chunk(req, "\"><button type=\"submit\">Delete</button></form>");
+        httpd_resp_sendstr_chunk(req, "</td><td>");
+        httpd_resp_sendstr_chunk(req, "<form method=\"post\" action=\"/fpaa_program");
+        httpd_resp_sendstr_chunk(req, req->uri);
+        httpd_resp_sendstr_chunk(req, entry->d_name);
+        httpd_resp_sendstr_chunk(req, "\"><button type=\"submit\">Program</button></form>");
         httpd_resp_sendstr_chunk(req, "</td></tr>\n");
     }
     closedir(dir);
@@ -237,7 +242,7 @@ static esp_err_t download_get_handler(httpd_req_t *req)
     if (stat(filepath, &file_stat) == -1) {
         /* If file not present on SPIFFS check if URI
          * corresponds to one of the hardcoded paths */
-        if (strcmp(filename, "/download/index.html") == 0) {
+        if (strcmp(filename, "/index.html") == 0) {
             return index_html_get_handler(req);
         } else if (strcmp(filename, "/favicon.ico") == 0) {
             return favicon_get_handler(req);
@@ -461,9 +466,12 @@ static esp_err_t fpaa_program_handler(httpd_req_t *req)
                                              req->uri + sizeof("/fpaa_program") - 1, sizeof(filepath));
     ESP_LOGI(TAG, "Attempting to program FPAA with file: '%s'", filepath);
 
-    program_fpaa(((struct file_server_data *)req->user_ctx)->spi_dev, filename);
-    /* Send HTML file header */
-    httpd_resp_sendstr(req, "<!DOCTYPE html><html><body>FPAA Programmed</body></html>");
+    program_fpaa(((struct file_server_data *)req->user_ctx)->spi_dev, filepath);
+
+    /* Redirect onto root to see the updated file list */
+    httpd_resp_set_status(req, "303 See Other");
+    httpd_resp_set_hdr(req, "Location", "/");
+    httpd_resp_sendstr(req, "FPAA Programmed");
 
     return ESP_OK;
 }
@@ -512,7 +520,7 @@ esp_err_t start_file_server(const char *base_path, spi_device_handle_t spi_dev)
 
     /* URI handler for getting uploaded files */
     httpd_uri_t file_download = {
-        .uri       = "/download/*",  // Match all URIs of type /path/to/file
+        .uri       = "/*",  // Match all URIs of type /path/to/file
         .method    = HTTP_GET,
         .handler   = download_get_handler,
         .user_ctx  = server_data    // Pass server data as context
@@ -523,7 +531,7 @@ esp_err_t start_file_server(const char *base_path, spi_device_handle_t spi_dev)
     /* URI handler for programming FPAA */
     httpd_uri_t fpaa_program = {
         .uri       = "/fpaa_program/*",  // Match all URIs of type /path/to/file
-        .method    = HTTP_GET,
+        .method    = HTTP_POST,
         .handler   = fpaa_program_handler,
         .user_ctx  = server_data    // Pass server data as context
     };
@@ -533,7 +541,7 @@ esp_err_t start_file_server(const char *base_path, spi_device_handle_t spi_dev)
     /* URI handler for playing a wav file on the DAC */
     httpd_uri_t play_wav = {
         .uri       = "/play_wav/*",  // Match all URIs of type /path/to/file
-        .method    = HTTP_GET,
+        .method    = HTTP_POST,
         .handler   = play_wav_handler,
         .user_ctx  = server_data    // Pass server data as context
     };

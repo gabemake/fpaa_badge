@@ -5,6 +5,7 @@
 #include "fpaa_spi.h"
 #include "file_server.h"
 #include "i2s_dac.h"
+#include "sdcard.h"
 #include "wifi.h"
 #define BUF_SIZE (1024)
 
@@ -33,6 +34,8 @@ void init_uart() {
 
 void app_main()
 {
+
+    const char* base_path = "/data";
     //init uart
     init_uart();
     printf("\nUART Logging started! (if you can see this)\n");
@@ -40,6 +43,7 @@ void app_main()
     // configure SD card
     printf("Setting up SD card (and LittleFS)\n");
     nvs_flash_init();
+    mount_storage(base_path);
 
     //configure SPI interface
     printf("Setting up SPI\n");
@@ -55,7 +59,7 @@ void app_main()
 
     //start webserver
     printf("Starting webserver\n");
-    start_file_server("/", spi);
+    start_file_server(base_path, spi);
 
 
 }

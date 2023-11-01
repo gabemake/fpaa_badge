@@ -9,7 +9,7 @@
 #define FILE_PATH_MAX (ESP_VFS_PATH_MAX + CONFIG_SPIFFS_OBJ_NAME_LEN)
 
 static const char *TAG = "fpaa_spi";
-DRAM_ATTR static const uint8_t test_spi_bytes[4] = {0xDE, 0xAD, 0xBE, 0xEF };
+//DRAM_ATTR static const uint8_t test_spi_bytes[4] = {0xDE, 0xAD, 0xBE, 0xEF };
 
 esp_err_t init_spi(spi_device_handle_t * spi) {
     esp_err_t ret;
@@ -66,7 +66,7 @@ static void spi_prog_file(spi_device_handle_t spi, uint8_t *filedata, uint16_t f
 esp_err_t program_fpaa(spi_device_handle_t spi, char* filepath) {
     //wait for any previous transaction to clear out
     ESP_LOGI(TAG, "Waiting for ongoing SPI transactions");
-/*
+
     //spi_prog_finish(spi);
     //load file into DRAM
     FILE *fd = NULL;
@@ -88,15 +88,16 @@ esp_err_t program_fpaa(spi_device_handle_t spi, char* filepath) {
     fseek(fd, 0, SEEK_SET); // seek back to beginning of file
     // proceed with allocating memory and reading the file
 
-    uint8_t filedata[fsize];
-
+    uint8_t * filedata;
+    filedata = heap_caps_malloc(fsize, MALLOC_CAP_DMA);
 
     ESP_LOGI(TAG, "Reading FPAA config file into memory");
     bytesread = fread(filedata, 1, fsize, fd);
-*/
+
     //set up transaction and program file
     ESP_LOGI(TAG, "Sending FPAA config file to SPI");
-    //spi_prog_file(spi, filedata, bytesread);
-    spi_prog_file(spi, test_spi_bytes,4);
+    spi_prog_file(spi, filedata, bytesread);
+    //spi_prog_file(spi, test_spi_bytes,4);
+    free(filedata);
     return ESP_OK;
 }
