@@ -1,0 +1,13 @@
+#include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_system.h"
+#include "esp_mac.h"
+#include "esp_chip_info.h"
+#include "esp_log.h"
+#include "driver/gpio.h"
+#include "driver/i2s_std.h"
+#include "driver/sdmmc_host.h"
+#include "sdmmc_cmd.h"
+#include "esp_vfs_fat.h"
+#include "fpaa_esp_config.h"
