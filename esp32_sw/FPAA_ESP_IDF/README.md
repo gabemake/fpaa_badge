@@ -9,10 +9,11 @@ I2S is used for the DAC.
 
 ### Status
 - Wifi works with default SSID/IP, no configuration yet
-- webserver is running, but no file management yet
-- SPI writes can be controlled by web request, but no file loading yet
+- webserver is running with basic file management
+- SPI writes can be sent with Program button on web page
 - I2S initializes, but no file playback yet
 - SD Card not working yet (need breakout board for dev kit)
+- Internal SPI flash being used for web server
 - platformio.ini locked to my serial port name, since my mac is picky
 
 ### TODO
