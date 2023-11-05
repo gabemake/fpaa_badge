@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head><title>Test page</title></head>
+    <body>
+        <h1>Hello World</h1>
+        <p><span id="state">starting</span></p>
+        <p><span id="msg"></span></p>
+        <p><input type="text" onchange="websocket.send(this.value);return false;" value="hi"></p>
+    </body>
+
+    <script>
+        var gateway = `ws://${window.location.hostname}/ws`;
+        var websocket;
+        window.addEventListener('load', onLoad);
+        function initWebSocket() {
+            console.log('Trying to open a WebSocket connection...');
+            document.getElementById('state').innerHTML = "opening"
+            websocket = new WebSocket(gateway);
+            websocket.onopen = onOpen;
+            websocket.onclose = onClose;
+            websocket.onmessage = onMessage; // <-- add this line
+        }
+        function onOpen(event) {
+            console.log('Connection opened');
+            document.getElementById('state').innerHTML = "opened"
+            websocket.send("hello")
+        }
+        function onClose(event) {
+            console.log('Connection closed');
+            document.getElementById('state').innerHTML = "closed"
+            setTimeout(initWebSocket, 2000);
+        }
+        function onMessage(event) {
+            var state;
+            console.log(event.data);
+            document.getElementById('msg').innerHTML += event.data;
+        }
+        function onLoad(event) {
+            document.getElementById('state').innerHTML = "loaded"
+            initWebSocket();
+        }
+    </script>
+</html>
