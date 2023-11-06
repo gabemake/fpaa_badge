@@ -5,10 +5,20 @@
 
 #define FPAA_HOST    SPI2_HOST
 
-#define PIN_NUM_MISO 9
-#define PIN_NUM_MOSI 14
-#define PIN_NUM_CLK  21
-#define PIN_NUM_CS   47
+#define FPAA_SO_PIN 9
+#define FPAA_SI_PIN 14
+#define FPAA_SCLK_PIN 21
+#define FPAA_CS1B_PIN 47
+
+#define FPAA_RESETB_PIN 46
+#define FPAA_MEMCLK_PIN 10
+#define FPAA_ACTIVATE_PIN 11
+#define FPAA_ERRB_PIN 12
+#define FPAA_LCCB_PIN 13
+#define FPAA_CS2B_PIN 48
+#define FPAA_CFGFLG_PIN 45
+#define FPAA_OUTPUT_PINS  ((1ULL<<FPAA_RESETB_PIN) | (1ULL<<FPAA_CS2B_PIN))
+#define FPAA_HOLD_PINS  (1ULL<<FPAA_ERRB_PIN)
 
 #define FPAA_PROG_MAX_BYTES 3204 // based on the only file I have
 #define FPAA_PROG_SCK_HZ 10000000 // 10 MHz for now

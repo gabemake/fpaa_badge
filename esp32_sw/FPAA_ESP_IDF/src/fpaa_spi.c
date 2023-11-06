@@ -14,9 +14,9 @@ static const char *TAG = "fpaa_spi";
 esp_err_t init_spi(spi_device_handle_t * spi) {
     esp_err_t ret;
     spi_bus_config_t buscfg = {
-        .miso_io_num = PIN_NUM_MISO,
-        .mosi_io_num = PIN_NUM_MOSI,
-        .sclk_io_num = PIN_NUM_CLK,
+        .miso_io_num = FPAA_SO_PIN,
+        .mosi_io_num = FPAA_SI_PIN,
+        .sclk_io_num = FPAA_SCLK_PIN,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
         .max_transfer_sz = FPAA_PROG_MAX_BYTES * 8
@@ -24,7 +24,7 @@ esp_err_t init_spi(spi_device_handle_t * spi) {
     spi_device_interface_config_t devcfg = {
         .clock_speed_hz = FPAA_PROG_SCK_HZ,     //Clock out at 10 MHz
         .mode = 0,                              //SPI mode 0
-        .spics_io_num = PIN_NUM_CS,             //CS pin
+        .spics_io_num = FPAA_CS1B_PIN,             //CS pin
         .queue_size = 6,                        //We want to be able to queue 7 transactions at a time
  //       .pre_cb = lcd_spi_pre_transfer_callback, // (none for now) Specify pre-transfer callback to handle D/C line
     };
@@ -96,8 +96,13 @@ esp_err_t program_fpaa(spi_device_handle_t spi, char* filepath) {
 
     //set up transaction and program file
     ESP_LOGI(TAG, "Sending FPAA config file to SPI");
+    //set CS2b, since CS1b is being handled by the SPI controller
+    gpio_set_level(FPAA_CS2B_PIN, 0);
+    //write bytes
     spi_prog_file(spi, filedata, bytesread);
     //spi_prog_file(spi, test_spi_bytes,4);
+    //remove chip select
+    gpio_set_level(FPAA_CS2B_PIN, 1);
     free(filedata);
     return ESP_OK;
 }

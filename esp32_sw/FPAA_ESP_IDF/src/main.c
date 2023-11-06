@@ -31,14 +31,49 @@ void init_uart() {
     uart_driver_install(UART_NUM_0, BUF_SIZE * 2, 0, 0, NULL, 0);
 }
 
+void init_gpio() {
+    //zero-initialize the config structure.
+    gpio_config_t io_conf = {};
+    //disable interrupt
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    //set as output mode
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    //bit mask of the pins that you want to set,e.g.GPIO18/19
+    io_conf.pin_bit_mask = FPAA_OUTPUT_PINS;
+    //disable pull-down mode
+    io_conf.pull_down_en = 0;
+    //disable pull-up mode
+    io_conf.pull_up_en = 0;
+    //configure GPIO with the given settings
+    gpio_config(&io_conf);
+
+    //disable interrupt
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    //set as output mode
+    io_conf.mode = GPIO_MODE_INPUT;
+    //bit mask of the pins that you want to set,e.g.GPIO18/19
+    io_conf.pin_bit_mask = FPAA_HOLD_PINS;
+    //disable pull-down mode
+    io_conf.pull_down_en = 0;
+    //disable pull-up mode
+    io_conf.pull_up_en = 1;
+    //configure GPIO with the given settings
+    gpio_config(&io_conf);
+}
 
 void app_main()
 {
 
     const char* base_path = "/data";
+
+
     //init uart
     init_uart();
     printf("\nUART Logging started! (if you can see this)\n");
+
+    //start GPIO
+    init_gpio();
+    gpio_set_level(FPAA_CS2B_PIN, 1);
 
     // configure SD card
     printf("Setting up SD card (and LittleFS)\n");
@@ -61,5 +96,8 @@ void app_main()
     printf("Starting webserver\n");
     start_file_server(base_path, spi);
 
+    //enabling FPAA
+    printf("releasing FPAA reset\n");
+    gpio_set_level(FPAA_RESETB_PIN, 1);
 
 }
